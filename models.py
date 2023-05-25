@@ -1,6 +1,13 @@
 from peewee import *
 
-db = SqliteDatabase('data.db')
+# db = SqliteDatabase('data.db')
+db = PostgresqlDatabase(
+    database='Review-Telegram-Bot',
+    user='postgres',
+    password='1234',
+    host='localhost',
+    port='5432'
+)
 
 class BaseModel(Model): # Створюємо базовий клас моделі
     class Meta: # Вказуємо, що модель буде використовувати базу даних db

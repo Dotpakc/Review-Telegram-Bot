@@ -79,7 +79,7 @@ async def add_place_instagram(message: types.Message, state: FSMContext):
     
 @dp.callback_query_handler(text="confirm", state=PlaceStates.confirm)
 async def add_place_confirm(call: types.CallbackQuery, state: FSMContext):
-    call.message.edit_reply_markup()
+    await call.message.edit_reply_markup()
     data = await state.get_data()
     place = Place.create(name=data.get("name"), address=data.get("address"), instagram=data.get("instagram"))
     await call.message.answer("Заклад додано")
