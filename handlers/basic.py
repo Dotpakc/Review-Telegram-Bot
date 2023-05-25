@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from aiogram import types 
 from aiogram.dispatcher import FSMContext
 #deep link
@@ -6,9 +8,14 @@ from aiogram.utils.deep_linking import decode_payload, get_start_link
 
 import json
 
-from loader import dp
+from loader import dp, bot
 from models import User, Place, Review
 from states.startstates import ReviewState
+
+from decouple import config
+
+ADMIN_ID = config('ADMIN_ID')
+
 
 
 #TODO Кнопка пропустити 
@@ -38,7 +45,7 @@ async def get_link(message: types.Message):
 
 
 #лінк відгуку
-@dp.message_handler(CommandStart())
+@dp.message_handler(CommandStart() , state="*")
 async def bot_start(message: types.Message, state: FSMContext):
     await state.finish()
     args = message.get_args()
@@ -50,7 +57,7 @@ async def bot_start(message: types.Message, state: FSMContext):
             await message.answer("Привіт, хочу стобою познайомитись до того як ти залишеш відгук, як тебе звати?")
             await ReviewState.name.set()
         else:
-            await message.asnwer("Привіт, рад тебе знову тут бачити, напиши свій відгук", reply_markup=skip_markup)
+            await message.answer("Привіт, рад тебе знову тут бачити, напиши свій відгук", reply_markup=skip_markup)
             await ReviewState.text.set()
         await state.update_data(place_id=place_id)
     else:
@@ -94,5 +101,8 @@ async def get_rating(call: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
     user = User.get_or_none(User.id == call.from_user.id)
     place = Place.get_or_none(Place.id == data.get('place_id'))
-    Review.create(user_id=user, place_id=place, text=data.get('text'), rating=call.data)
+    if data.get('text') == None:
+        data.update(text="Користувач не залишив відгук")
+    Review.create(user_id=user, place_id=place, text=data.get('text'), rating=call.data, date = datetime.now())
+    await bot.send_message(chat_id=ADMIN_ID, text=f"Новий відгук від {user.name}:\n{data.get('text')}\n Оцінка: {call.data} зірочок\n Заклад: {place.name}")
     await state.finish()
